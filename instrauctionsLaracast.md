@@ -442,3 +442,103 @@ create a nav-link component με $slot
 </body>
 </html>
 ```
+
+# 5
+## active links
+
+#### layout.blade.php
+αλλάζω τα Link μου ωστε να έχουν ένα turnary χρησιμοποιόντας το request() ->is('')  
+- request() → Returns the current HTTP request object (same as Illuminate\Http\Request).
+- is('contact') → This is a method on the request object that checks whether the path portion of the current URL matches the given string or pattern.
+```php
+<div class="ml-10 flex items-baseline space-x-4">
+  <a href="/" class=" {{ request()-> is('/') ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}}rounded-md px-3 py-2 text-sm font-medium text-white" aria-current="page">Home</a>
+  <a href="/about"  class=" {{ request()-> is('about') ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}}rounded-md px-3 py-2 text-sm font-medium text-white">About</a>
+  <a href="/contact"  class=" {{ request()-> is('contact') ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}}rounded-md px-3 py-2 text-sm font-medium text-white">Contact</a>
+</div>
+```
+
+## δημιουργία nav-link 
+#### nav-link.blade.html
+ουσιαστικά κάνω copy-paste όλο τo `<a>` χωρίς το href  
+The aria-current attribute tells assistive technologies (like screen readers) which link or item is the currently active one in a set of options (like navigation links).  
+
+aria-current="page" means: "This is the link to the page the user is currently on."  
+aria-current="false" (or not present) means: "This is not the current page."
+```php
+<!-- <a href="{{ $href }}"> {{ $slot }}</a> -->
+<!-- <a {{ $attributes }}> {{ $slot }}</a> -->
+
+<a 
+  class=" {{ request()-> is('/') ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}}rounded-md px-3 py-2 text-sm font-medium text-white" 
+  aria-current="{{ request()-> is('/') ? 'page' : 'false' }}"
+  {{ $attributes }}
+>
+  {{ $slot }}
+</a>
+```
+
+#### Layoute.bade.php
+```php
+<div class="ml-10 flex items-baseline space-x-4">
+  <x-nav-link href="/">Home</x-nav-link>
+  <x-nav-link href="/about">About</x-nav-link>
+  <x-nav-link href="/contact">Contact</x-nav-link>
+</div>
+```
+
+## @props $attributes :active
+#### nav-link.blade.html
+Το $attributes είναι τα διάφορα σαν class= href= κλπ που υπάρχουν μες στο tag μου. Δηλώνωντας μες στο child component μες στο tag {{$attributes}} περνάω αυτόματα όλα τα styling κλπ απο τον πατέρα  
+
+με το @props ονοματίζω ένα απο αυτα τα attribute και μπορών να αποκτήσω μια μεταβλητή απο τον patera που μπορώ να το χρησιμοποιήσω μεσα στην λογική μου.  
+εδώ με `@props(['active' => false])` (`=> false` δηλ η default τιμή) αποκτάω την $active που την χρησιμοποιώ στο `aria-current="{{ $active ? 'page' : 'false' }}"` 
+```php
+@props(['active' => false])
+
+<a 
+  class=" {{ $active ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}}rounded-md px-3 py-2 text-sm font-medium text-white" 
+  aria-current="{{ $active ? 'page' : 'false' }}"
+  {{ $attributes }}
+>{{ $slot }}</a>
+```
+
+#### Layout.blade.php
+η `active=` διαβάζει ως string αυτό που συναντάει. Αλλα αν βάλω μπροστά `:`,  `:active` καταλαβαίνει οτι είναι μια συνάρτηση (boolean στην προκυμένη )
+```php
+<div class="ml-10 flex items-baseline space-x-4">
+  <x-nav-link href="/" :active="request()->is('/')">Home</x-nav-link>
+  <x-nav-link href="/about" :active="request()->is('about')">About</x-nav-link>
+  <x-nav-link href="/contact" :active="request()->is('contact')" >Contact</x-nav-link>
+</div>
+```
+
+## h/w
+New prop με ονομα type θα λέει αν το navlink θα παρουσιαζετε ως btn ή a. 
+<x-nav-link type="a">Home</x-nav-link>
+<x-nav-link type="button">Home</x-nav-link>
+θα χρειαστώ ένα ιφ
+
+#### nav-link.blade.php
+- αλλά το btn μου δεν δουλευει γιατι παίρνει Href που δεν είναι ιδιότητα του btn
+```php
+@props(['active' => false, 'type' => 'a'])
+
+@if ($type === 'a') 
+  <a 
+    class="{{ $active ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}rounded-md px-3 py-2 text-sm font-medium text-white" 
+    aria-current="{{ $active ? 'page' : 'false' }}"
+    {{ $attributes }}
+  >
+    {{ $slot }}
+  </a>
+@else
+  <button 
+    class="{{ $active ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}rounded-md px-3 py-2 text-sm font-medium text-white" 
+    aria-current="{{ $active ? 'page' : 'false' }}"
+    {{ $attributes }}
+  >
+    {{ $slot }}
+  </button>
+@endif
+```
