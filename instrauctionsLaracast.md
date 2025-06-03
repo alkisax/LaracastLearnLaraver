@@ -333,14 +333,13 @@ create a nav-link component με $slot
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-<!--
-  This example requires updating your template:
-
-  ```
-  <html class="h-full bg-gray-100">
-  <body class="h-full">
-  ```
--->
+  <!--
+    This example requires updating your template:
+    
+    <html class="h-full bg-gray-100">
+    <body class="h-full">
+    
+  -->
 <div class="min-h-full">
   <nav class="bg-gray-800">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -541,4 +540,166 @@ New prop με ονομα type θα λέει αν το navlink θα παρουσ�
     {{ $slot }}
   </button>
 @endif
+```
+
+# 6 view data - route wildcards
+`php artisan serve` 
+
+#### web.php
+μπορώ να περάσω ένα Obj στο web και να έχω προσβαση σε αυτό στην σελίδα
+```php
+Route::get('/', function () {
+    return view('home', [
+      'greeting' => 'Hello',
+      'name' => 'Alkis'
+    ]);
+});
+```
+#### home.blade.php
+```php
+<x-layout>
+  <x-slot:heading>
+    Home Page
+  </x-slot:heading>
+
+  <h1>{{ $greeting }}.  from home page. My name is {{ $name }}</h1>
+</x-layout>
+```
+
+τα αλάζουμε ξανά
+#### web.php
+```php
+Route::get('/jobs', function () {
+  return view('jobs', [
+    'jobs' => [
+      [
+        'title' => 'director',
+        'salary' => '$50,000'
+      ],
+      [
+        'title' => 'programmer',
+        'salary' => '$10,000'
+      ],
+      [
+        'title' => 'teacher',
+        'salary' => '$40,000'
+      ],      
+    ]
+  ]);
+});
+```
+
+#### jobs.blade.php
+```php
+<x-layout>
+  <x-slot:heading>
+    Job listings
+  </x-slot:heading>
+  <h1>hello from job listings page</h1>
+
+  @foreach ($jobs as $job)
+    <li><strong>{{ $job['title'] }}</strong>: Pays {{ $job['salary'] }} per year</li>
+  @endforeach
+
+</x-layout>
+```
+
+## make <li> clickable
+#### web.php
+```php
+Route::get('/jobs', function () {
+  return view('jobs', [
+    'jobs' => [
+      [
+        'id' => '1',
+        'title' => 'director',
+        'salary' => '$50,000'
+      ],
+      [
+        'id' => '2',
+        'title' => 'programmer',
+        'salary' => '$10,000'
+      ],
+      [
+        'id' => '3',
+        'title' => 'teacher',
+        'salary' => '$40,000'
+      ],      
+    ]
+  ]);
+});
+
+// το {id} χωρις $ ειναι συμαντικο
+Route::get('/jobs/{id}', function () {
+
+  return view('contact');
+});
+```
+
+#### web.php
+```php
+use Illuminate\Support\Arr;
+
+Route::get('/jobs/{id}', function ($id) {
+  $jobs = [
+    [
+      'id' => 1,
+      'title' => 'director',
+      'salary' => '$50,000'
+    ],
+    [
+      'id' => 2,
+      'title' => 'programmer',
+      'salary' => '$10,000'
+    ],
+    [
+      'id' => 3,
+      'title' => 'teacher',
+      'salary' => '$40,000'
+    ],      
+  ];
+
+  // Finds the first job with matching ID from the array using a callback.
+  $job = Arr::first($jobs, fn($job) => $job['id'] == $id);
+
+  dd($job);
+
+  return view('job', ['job' => $job]);
+});
+```
+
+#### job.blade.php
+```php
+<x-layout>
+  <x-slot:heading>
+    Job  
+  </x-slot:heading>
+  <h2 class="font-bold text-lg">{{ $job['title'] }}</h2>
+
+<p>
+  this job pays {{ $job['salary'] }} per year
+</p>
+
+</x-layout>
+```
+
+#### jobs.blade.php
+```php
+<x-layout>
+  <x-slot:heading>
+    Job listings
+  </x-slot:heading>
+  <h1>hello from job listings page</h1>
+
+  <ul>
+    @foreach ($jobs as $job)
+      <li>
+        <a href="/jobs/{{ $job['id'] }}" class="text-blue-500 hover:underline">
+          <strong>{{ $job['title'] }}</strong>: Pays {{ $job['salary'] }} per year
+        </a>
+      </li>
+    @endforeach
+  </ul>
+
+</x-layout>
 ```
