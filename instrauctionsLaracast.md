@@ -196,12 +196,12 @@ Route::get('/contact', function () {
 ```
 
 δεν είναι ωράιο που καναμε copy paste τα <nav>
-## $slot και <x-layout>
+## $slot και `<x-layout>`
 - δημιουργω φάκελο views/Components  
 
 #### Compnents/layout.blade.php
 - **{{ $slot }}**
-- **<x-layout>**
+- **`<x-layout>`**
 ```php
 <!DOCTYPE html>
 <html lang="en">
@@ -248,11 +248,13 @@ Route::get('/contact', function () {
 create a nav-link component με $slot
 #### Layout.blade.php
 ```php
-  <!-- <nav>
+  /*
+  <nav>
     <a href="/">Home</a>
     <a href="/about">about</a>
     <a href="/contact">contact</a>
-  </nav> -->
+  </nav>
+  */
   <nav>
     <x-nav-link href="/">Home</x-nav-link>
     <x-nav-link href="/about">About</x-nav-link>
@@ -294,7 +296,7 @@ create a nav-link component με $slot
 - για να αλλαξω το heding θα πρέπει και πάλι να έρθει κάτι απο τα child  αλλα τώρα έχω ήδη χρησιμοποιήσει το $slot. `      <h1>{{ $heading }}</h1>`
 - -> τωρα πρέπει να αλλαξω τα child
 #### home.blade.php
-```php
+```xml
 <x-layout>
   <x-slot:heading>
     Home Page
@@ -304,7 +306,7 @@ create a nav-link component με $slot
 ```
 
 #### about.blade.php
-```php
+```xml
 <x-layout>
   <x-slot:heading>
     About Page
@@ -314,7 +316,7 @@ create a nav-link component με $slot
 ```
 
 #### contact.blade.php
-```php
+```xml
 <x-layout>
   <x-slot:heading>
     Contact Page
@@ -323,23 +325,25 @@ create a nav-link component με $slot
 </x-layout>
 ```
 #### Layout.blade.php
-```php
+- ακολουθεί απλοποίηση του αρχειου απο gpt
+```xml
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>home page</title>
+  // προστέθηκε το script του tailwind
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-  <!--
+  /*<!--
     This example requires updating your template:
     
     <html class="h-full bg-gray-100">
     <body class="h-full">
     
-  -->
+  -->*/
 <div class="min-h-full">
   <nav class="bg-gray-800">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -350,7 +354,7 @@ create a nav-link component με $slot
           </div>
           <div class="hidden md:block">
             <div class="ml-10 flex items-baseline space-x-4">
-              <!-- Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" -->
+              //<!-- Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" -->
               <a href="/" class="rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white" aria-current="page">Home</a>
               <a href="/about" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">About</a>
               <a href="/contact" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Contact</a>
@@ -438,6 +442,34 @@ create a nav-link component με $slot
   </main>
 </div>
   
+</body>
+</html>
+```
+- απλοποίηση του αρχείου απο gpt
+```xml
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ $heading ?? 'Page Title' }}</title>
+</head>
+<body>
+
+  <nav>
+    <a href="/">Home</a> |
+    <a href="/about">About</a> |
+    <a href="/contact">Contact</a>
+  </nav>
+
+  <header>
+    <h1>{{ $heading }}</h1>
+  </header>
+
+  <main>
+    {{ $slot }}
+  </main>
+
 </body>
 </html>
 ```
@@ -556,7 +588,7 @@ Route::get('/', function () {
 });
 ```
 #### home.blade.php
-```php
+```xml
 <x-layout>
   <x-slot:heading>
     Home Page
@@ -590,7 +622,7 @@ Route::get('/jobs', function () {
 ```
 
 #### jobs.blade.php
-```php
+```xml
 <x-layout>
   <x-slot:heading>
     Job listings
@@ -604,7 +636,7 @@ Route::get('/jobs', function () {
 </x-layout>
 ```
 
-## make <li> clickable
+## make `<li>` clickable
 #### web.php
 ```php
 Route::get('/jobs', function () {
@@ -662,14 +694,14 @@ Route::get('/jobs/{id}', function ($id) {
   // Finds the first job with matching ID from the array using a callback.
   $job = Arr::first($jobs, fn($job) => $job['id'] == $id);
 
-  dd($job);
+  // dd($job);
 
   return view('job', ['job' => $job]);
 });
 ```
 
 #### job.blade.php
-```php
+```xml
 <x-layout>
   <x-slot:heading>
     Job  
@@ -684,7 +716,7 @@ Route::get('/jobs/{id}', function ($id) {
 ```
 
 #### jobs.blade.php
-```php
+```xml
 <x-layout>
   <x-slot:heading>
     Job listings
@@ -703,3 +735,218 @@ Route::get('/jobs/{id}', function ($id) {
 
 </x-layout>
 ```
+
+# 7 autoloading namespaces models
+`php artisan serve` 
+
+- αυτή τη στιγμή το web.php είναι:
+- η λίστα των jobs επαναλαμβάνετε δύο φορές και αυτό είναι πρόβλημα
+- `use($jobs)`
+```Php
+<?php
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', function () {
+    return view('home', [
+      'greeting' => 'Hello',
+      'name' => 'Alkis'
+    ]);
+});
+
+$jobs = [
+  [
+    'id' => '1',
+    'title' => 'director',
+    'salary' => '$50,000'
+  ],
+  [
+    'id' => '2',
+    'title' => 'programmer',
+    'salary' => '$10,000'
+  ],
+  [
+    'id' => '3',
+    'title' => 'teacher',
+    'salary' => '$40,000'
+  ],      
+];
+
+Route::get('/jobs', function () use($jobs) {
+  return view('jobs', [
+    'jobs' => $jobs]);
+});
+
+Route::get('/jobs/{id}', function ($id) use($jobs) {
+  $job = Arr::first($jobs, fn($job) => $job['id'] == $id);
+
+  return view('job', ['job' => $job]);
+});
+
+Route::get('/contact', function () {
+    return view('contact');
+});
+```
+
+## class
+- το ξαναγράφω μόνο που αντι να έχω ένα χύμα arr μέσα στον κωδικα που το καλώ με use($κατι) του φτιάχνω μια κλάση με μια static μέθοδο. 
+- Αντικαθηστώ εκεί που τα χρησιμοποιώ τα $jobs με Job::all()
+```php
+<?php
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', function () {
+    return view('home', [
+      'greeting' => 'Hello',
+      'name' => 'Alkis'
+    ]);
+});
+
+// το `: array` ειναι return type
+class Job {
+  public static function all(): array {
+    return [
+      [
+        'id' => '1',
+        'title' => 'director',
+        'salary' => '$50,000'
+      ],
+      [
+        'id' => '2',
+        'title' => 'programmer',
+        'salary' => '$10,000'
+      ],
+      [
+        'id' => '3',
+        'title' => 'teacher',
+        'salary' => '$40,000'
+      ],      
+    ];
+  }
+}
+
+
+Route::get('/jobs', function () {
+  return view('jobs', [
+    'jobs' => Job::all()
+  ]);
+});
+
+Route::get('/jobs/{id}', function ($id) {
+  $job = Arr::first(Job::all(), fn($job) => $job['id'] == $id);
+
+  return view('job', ['job' => $job]);
+});
+
+Route::get('/contact', function () {
+    return view('contact');
+});
+```
+
+## models folder
+- δεν είναι συνηθησμένο να έχουμε μια κλάση μέσα στο web.php για αυτό θα φτιάξουμε ένα νέο αρχείο στον φάκελο app/Models
+- προσοχή στο `namespace App\Models;` είναι για να οργανώνει τους φακέλους και τα αρχεία γιατί είναι πιθανό να έχω και άλλη κλάση με αυτό το όνομα (ακόμα και σε κάποιο dependancy)
+- αργότερα στο web.php θα αφαιρέσω την κλάση που πήγε στο δικό της αρχείο και θα προσθέσν `use App\Models\Job;` (**χρησιμοποιεί `/`**)
+#### app/models/job.php
+```php
+<?php
+namespace App\Models;
+
+class Job {
+  public static function all(): array {
+    return [
+      [
+        'id' => '1',
+        'title' => 'director',
+        'salary' => '$50,000'
+      ],
+      [
+        'id' => '2',
+        'title' => 'programmer',
+        'salary' => '$10,000'
+      ],
+      [
+        'id' => '3',
+        'title' => 'teacher',
+        'salary' => '$40,000'
+      ],      
+    ];
+  }
+}
+```
+#### web.php
+```php
+<?php
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Route;
+use App\Models\Job;
+
+Route::get('/', function () {
+    return view('home', [
+      'greeting' => 'Hello',
+      'name' => 'Alkis'
+    ]);
+});
+
+Route::get('/jobs', function () {
+  return view('jobs', [
+    'jobs' => Job::all()
+  ]);
+});
+
+Route::get('/jobs/{id}', function ($id) {
+  $job = Arr::first(Job::all(), fn($job) => $job['id'] == $id);
+
+  return view('job', ['job' => $job]);
+});
+
+Route::get('/contact', function () {
+    return view('contact');
+});
+```
+
+## static method
+- `$job = Arr::first(Job::all(), fn($job) => $job['id'] == $id);` Aυτό καλεί όλα τα jobs και επιστρέφει το πρώτο που έχει ίδιο id με αυτο που ψάχνω. Θα μπορούσα να το μεταφέρω στην κλάση ως static function
+- άλλαξα το job::all σε static::all που θημίζει λίγο το this. της java και εννοεί οτι χρησιμοποίησε την μέθοδο all της παρούσας κλάσης
+```php
+<?php
+
+namespace App\Models;
+use Illuminate\Support\Arr;
+
+class Job {
+  public static function all(): array {
+    return [
+// etc.      
+    ];
+  }
+
+  public static function find(int $id): array {
+      return Arr::first(static::all(), fn($job) => $job['id'] == $id);
+  }
+}
+```
+- και τωρα στο web.php μπορω να αντικαταστήσω το `  $job = Arr::first(Job::all(), fn($job) => $job['id'] == $id);` με `$job = Job::find($id);`
+
+```php
+Route::get('/jobs/{id}', function ($id) {
+  $job = Job::find($id);
+  return view('job', ['job' => $job]);
+});
+```
+
+## error handling intro
+#### Job.php
+```php
+  public static function find(int $id): array {
+      $job =  Arr::first(static::all(), fn($job) => $job['id'] == $id);
+      if (!$job) {
+        abort(404);
+      }
+      return $job;
+  }
+```
+---
+# eloquent - βάσεις δεδομένων
+---
