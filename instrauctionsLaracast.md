@@ -1021,3 +1021,114 @@ Route::get('/jobs/{id}', function ($id) {
 - `php artisan migrate` και τώρα μου προσθέτει μόνο τις αλλαγές και όχι όλα τα αρχεία απο την αρχή
 
 # eloquent
+- ORM αντιστοίχηση πίνακα με αντικείμενο στον κώδικα
+##
+#### Models/job.php
+- αρχικά είναι
+```php
+<?php
+
+namespace App\Models;
+use Illuminate\Support\Arr;
+
+class Job {
+  public static function all(): array {
+    return [
+      [
+        'id' => '1',
+        'title' => 'director',
+        'salary' => '$50,000'
+      ],
+      [
+        'id' => '2',
+        'title' => 'programmer',
+        'salary' => '$10,000'
+      ],
+      [
+        'id' => '3',
+        'title' => 'teacher',
+        'salary' => '$40,000'
+      ],      
+    ];
+  }
+
+  public static function find(int $id): array {
+      $job =  Arr::first(static::all(), fn($job) => $job['id'] == $id);
+      if (!$job) {
+        abort(404);
+      }
+      return $job;
+  }
+}
+```
+Η eloquent έχει δικές τις all() και find() οποτε δεν τις χρειαζόμαστε πια
+```php
+<?php
+
+namespace App\Models;
+use Illuminate\Support\Arr;
+use Illuminate\Database\Eloquent\Model;
+
+class Job extends Model {
+
+}
+```
+- αλλαζω το `web.php` 
+```php
+Route::get('/', function () {
+
+  $jobs = Job::all();
+  dd($jobs[0]->title);
+});
+```
+- δεν μου γυρνάει κάτι. Υποθέτει οτι εφόσων έχω ένα Model Job θα υπάρχει και ένας πινακας με το ίδιο όνομα. αλλα ο πινακάς μου λέγετε job_listings
+#### Job.php
+```php
+class Job extends Model {
+  protected $table = 'job_listings';
+}
+```
+- ξαναγυρνάω τώρα το web στην αρχική του μορφή και all() τρέχει χωρίς να χρειάζετε να κάνω κάποια αλλαγή
+```php
+Route::get('/', function () {
+  // $jobs = Job::all();
+  // dd($jobs[0]->title);
+    return view('home', [
+      'greeting' => 'Hello',
+      'name' => 'Alkis'
+    ]);
+});
+
+Route::get('/jobs', function () {
+  return view('jobs', [
+    'jobs' => Job::all()
+  ]);
+});
+```
+ 
+- `php artisan tinker` Με αυτο μπαίνουμε στο cli της γλωσσας για να κανουμε δοκιμές με το eloquent
+- **δεν λειτουργεί** `App\Models\Job::create(['title' => 'Acme Director', 'salary' => '$1,000,000']);`
+- δεν επιτρέπει προσθήκες, πρέπει να του πούμε στο Model οτι είναι fillable `protected $fillable = ['title', 'salary'];`
+#### Job.php
+```php
+class Job extends Model {
+  protected $table = 'job_listings';
+
+  protected $fillable = ['title', 'salary'];
+}
+```
+
+- για να αναδημιοργήσουμε τη find() που σβήσαμε
+`App\Models\Job::find(4)`
+- η elequent τρέχει απο πίσω εντολές SQL αλλά είναι κάπως σαν δικιά της γλώσσα
+
+- Delete
+`$job->delete();`
+
+- make:model
+`php artisan help make:model`
+
+`php artisan make:model Comment`
+`php artisan make:model Post -m`
+
+# Model Factories
