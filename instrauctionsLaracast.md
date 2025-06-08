@@ -948,5 +948,76 @@ Route::get('/jobs/{id}', function ($id) {
   }
 ```
 ---
-# eloquent - βάσεις δεδομένων
+- # eloquent - βάσεις δεδομένων
 ---
+# migrations
+- στο .env υπάρχει μέσα `DB_CONNECTION=sqlite`
+- μπορώ ακομα να το δώ με `php artisan db:show` στο terminal
+- οταν δημιουργώ ένα προτζεκτ με `laravel new example` μου φτιάχνει βαση δεδομένων μόνο του. Αλλιώς πρέπει `php artisan migrate`
+### οδηγίες για να φτιαξω ένα schema
+- `tableplus.com`
+**IMPORTANT** δεν μπορούσα να εγκαταστήσω το tableplus και συνεχίζω χρησιμοποιόντας **SQLiteStudio**
+- το schema μου βρίσκετε στον φάκελο migrations
+
+στο αρχείο
+#### 0001_01_01_000000_create_users_table.php
+- αυτά είναι migration files μπορώ να φιτάξω έναν πίνακα απλώς τρέχοντας μια εντολή (όπως και καποιος άλλος. σαν το npm install)
+```php
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken();
+            $table->timestamps();
+        });
+```
+το αλλάζω σε
+```Php
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('first_name');
+            $table->string('last_name');            
+            $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken();
+            $table->timestamps();
+        });
+```
+- αν τρέξω `php artisan` βλέπω την λίστα των εντολών όπου
+```
+ migrate
+  migrate:fresh             Drop all tables and re-run all migrations
+  migrate:install           Create the migration repository
+  migrate:refresh           Reset and re-run all migrations
+  migrate:reset             Rollback all database migrations
+  migrate:rollback          Rollback the last database migration
+  migrate:status            Show the status of each migration
+```
+- H εντολή  **fresh είναι ΕΠΙΚΥΝΔΗΝΗ** τα σβήνει όλα και τα φτιαχνει απο την αρχή με βάση το αρχείο migrate
+- `php artisan migrate:fresh`
+- για να δω τις αλλαγες πρέπει να ανοιγοκλείσω το connection στο sql gui
+- `php artisan make:migration` 
+- στο όνομα `create_job_listings_table` γιατι υπάρχει ήδη πίνακας jobs
+- το βρίσκω στον φάκελο Migrations. έχει μέσα ένα up και ένα down για να κάνω το migration και για να κανω rollback
+
+#### 2025_06_08_154349_create_job_listings_table.php
+```php
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('job_listings', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->string('salary');                        
+            $table->timestamps();
+        });
+    }
+```
+- `php artisan migrate` και τώρα μου προσθέτει μόνο τις αλλαγές και όχι όλα τα αρχεία απο την αρχή
+
+# eloquent
