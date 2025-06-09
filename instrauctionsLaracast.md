@@ -450,15 +450,15 @@ create a nav-link component με $slot
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{{ $heading ?? 'Page Title' }}</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ $heading }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-
   <nav>
-    <a href="/">Home</a> |
-    <a href="/about">About</a> |
+    <a href="/" class="{{ request()->is('/') ? 'active' : '' }}">Home</a>
+    <a href="/about">About</a>
     <a href="/contact">Contact</a>
   </nav>
 
@@ -469,7 +469,6 @@ create a nav-link component με $slot
   <main>
     {{ $slot }}
   </main>
-
 </body>
 </html>
 ```
