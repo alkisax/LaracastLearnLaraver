@@ -950,7 +950,7 @@ Route::get('/jobs/{id}', function ($id) {
 ---
 - # eloquent - βάσεις δεδομένων
 ---
-# migrations
+# 8 migrations
 - στο .env υπάρχει μέσα `DB_CONNECTION=sqlite`
 - μπορώ ακομα να το δώ με `php artisan db:show` στο terminal
 - οταν δημιουργώ ένα προτζεκτ με `laravel new example` μου φτιάχνει βαση δεδομένων μόνο του. Αλλιώς πρέπει `php artisan migrate`
@@ -1020,7 +1020,7 @@ Route::get('/jobs/{id}', function ($id) {
 ```
 - `php artisan migrate` και τώρα μου προσθέτει μόνο τις αλλαγές και όχι όλα τα αρχεία απο την αρχή
 
-# eloquent
+# 9 eloquent
 - ORM αντιστοίχηση πίνακα με αντικείμενο στον κώδικα
 ##
 #### Models/job.php
@@ -1131,4 +1131,198 @@ class Job extends Model {
 `php artisan make:model Comment`
 `php artisan make:model Post -m`
 
-# Model Factories
+# 10 Model Factories
+##
+- στον φάκελο \database\factories\UserFactory.php
+```php
+    public function definition(): array
+    {
+        return [
+            'name' => fake()->name(),
+            'email' => fake()->unique()->safeEmail(),
+            'email_verified_at' => now(),
+            'password' => static::$password ??= Hash::make('password'),
+            'remember_token' => Str::random(10),
+        ];
+    }
+
+    public function unverified(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'email_verified_at' => null,
+        ]);
+    }
+```
+
+- `php artisan tinker` 
+
+- μέσασ σοτ Models/User.php
+`use HasFactory, Notifiable;` το factory μου δίνει διάφορες μεθόδους. Μια απο αυτές είναι το factory
+
+- `App\Models\User::factory()->create();`
+μου έβγαλε λάθος ` Illuminate\Database\QueryException  SQLSTATE[HY000]: General error: 1 table users has no column named name`  
+το είχαμε αλλάξει σε first_name last_name  
+
+#### \database\factories\UserFactory.php
+```php
+    public function definition(): array
+    {
+        return [
+            'first_name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
+            'email' => fake()->unique()->safeEmail(),
+            'email_verified_at' => now(),
+            'password' => static::$password ??= Hash::make('password'),
+            'remember_token' => Str::random(10),
+        ];
+    }
+```
+κλείνω και ξαναανοιγω ctrl+C
+- `App\Models\User::factory()->create();`
+μου δημιούργησε μια καταχώρηση με ψευτικά στοιχεία  
+- `App\Models\User::factory(100)->create();` (δημιούργησε 100)
+
+### φτιάχνω factory για το job
+- `php artisan make:factory JobFactory`  
+`php artisan tinker`  
+`App\Models\Job::factory()->create()`  
+έχω error: `BadMethodCallException  Call to undefined method App\Models\Job::factory().`
+- στο Models/Job.php πρέπει να προσθέσω το HasFactory
+```php
+<?php
+namespace App\Models;
+use Illuminate\Support\Arr;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class Job extends Model {
+  use HasFactory;
+  protected $table = 'job_listings';
+  protected $fillable = ['title', 'salary'];
+}
+```
+- `php artisan make:factory JobFactory`  
+`php artisan tinker` 
+- `App\Models\Job::factory(300)->create();` (δημιούργησε 300)
+
+- στο UserFactory 
+```php
+    public function unverified(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'email_verified_at' => null,
+        ]);
+    }
+```
+εχουν και οι τρακόσιοι ίδια ώρα στο email_veriified  
+`App\Models\User::factory()->unverified()->create();`  
+τώρα ` email_verified_at: null`  
+
+- προσθέτω admin στο UserFactory.php
+```php
+    public function definition(): array
+    {
+        return [
+            'first_name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
+            'email' => fake()->unique()->safeEmail(),
+            'email_verified_at' => now(),
+            'password' => static::$password ??= Hash::make('password'),
+            'remember_token' => Str::random(10),
+            'admin' => false,
+        ];
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'admin' => true,
+        ]);
+    }
+```
+
+##
+#### \database\migrations\2025_06_08_154349_create_job_listings_table.php
+
+```php
+    public function up(): void
+    {
+        Schema::create('job_listings', function (Blueprint $table) {
+            $table->id();
+            // foreign id called employer_id
+            // αλλα δεν έχω ακόμα employers table
+            $table->string('title');
+            $table->string('salary');                        
+            $table->timestamps();
+        });
+    }
+```
+
+- `php artisan make:model Employer -m` (-m = migration)
+μου φτιάχνει δύο αρχεία model και migration
+
+#### example\database\migrations\2025_06_09_074035_create_employers_table.php
+```php
+    public function up(): void
+    {
+        Schema::create('employers', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->timestamps();
+        });
+    }
+```
+
+#### \database\migrations\2025_06_08_154349_create_job_listings_table.php
+```php
+    public function up(): void
+    {
+        Schema::create('job_listings', function (Blueprint $table) {
+            $table->id();
+            // foreign id called employer_id
+            // οταν δημιουργεί id είναι τύπου big integer
+            $table->unsignedBigInteger('employer_id');
+            $table->string('title');
+            $table->string('salary');                        
+            $table->timestamps();
+        });
+    }
+```
+- `php artisan migrate:fresh` (προσοχή με το fresh)  
+τώρα το model job_listings έχει foreign id
+#### JobFactory.php
+```php
+class JobFactory extends Factory
+{
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
+    public function definition(): array
+    {
+        return [
+            'title' => fake()->jobTitle(),
+            'employer_id' => Employer::factory(), //εκτός απο το να μου δημιουργήσει την δουλειά να πάει και στον πίνακα employer και να φτίαξει και εκεί
+            'salary' => '$50,000',
+        ];
+    }
+}
+```
+τώρα όμως δεν υπάρχει το factory στον employer και πρέπει να το δημιουγήσω  
+- στο make:model υπάρχει και η επιλογη -f για να μου το φτιάξει το factory  
+- σβήνω το μοντέλο employer για να το ξαναφτιάξω με factory  
+`php artisan make:model Employer -f`  
+
+#### example\database\factories\EmployerFactory.php
+```php
+    public function definition(): array
+    {
+        return [
+            'name' => fake()->company()
+        ];
+    }
+```
+τώρα μπορεί να τρέξει το JobFactory  
+`php artisan tinker`  
+`App\Models\Job::factory(10)->create();`  
