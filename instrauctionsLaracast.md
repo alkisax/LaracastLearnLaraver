@@ -1127,7 +1127,7 @@ class Job extends Model {
 - make:model
 `php artisan help make:model`
 
-`php artisan make:model Comment`
+`php artisan make:model Comment`  
 `php artisan make:model Post -m`
 
 # 10 Model Factories
@@ -1155,7 +1155,7 @@ class Job extends Model {
 
 - `php artisan tinker` 
 
-- μέσασ σοτ Models/User.php
+- μέσασ στο Models/User.php
 `use HasFactory, Notifiable;` το factory μου δίνει διάφορες μεθόδους. Μια απο αυτές είναι το factory
 
 - `App\Models\User::factory()->create();`
@@ -1325,3 +1325,39 @@ class JobFactory extends Factory
 τώρα μπορεί να τρέξει το JobFactory  
 `php artisan tinker`  
 `App\Models\Job::factory(10)->create();`  
+
+# 11 Eloquent relationships 
+## belongsTo
+#### Job.php
+```php
+class Job extends Model {
+  use HasFactory;
+  protected $table = 'job_listings';
+
+  protected $fillable = ['title', 'salary'];
+
+  public function employer(){
+    return $this->belongsTo(Employer::class);
+  }
+}
+```
+## hasMany
+`php artisan tinker`  
+`$job = App\Models\Job::first();` 
+`$job->employer` χωρίς ()  
+`$job->employer->name`  
+`$job->employer::first();`  
+`$employer->jobs()` αν θέλω όλες τις δουλειές του εργοδότη. αλλα θα χρηαστώ να φτιάξω μια μέθοδο jobs()  
+#### Employer.php
+```php
+class Employer extends Model
+{
+    use HasFactory;
+
+    public function jobs() {
+      return $this->hasMany(Job::class);
+    }
+}
+```
+`$employer = App\Models\Employer::first();`  
+`$employer->jobs;`  
