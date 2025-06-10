@@ -1341,12 +1341,14 @@ class Job extends Model {
   }
 }
 ```
-## hasMany
+
 `php artisan tinker`  
 `$job = App\Models\Job::first();` 
 `$job->employer` χωρίς ()  
 `$job->employer->name`  
-`$job->employer::first();`  
+`$job->employer::first();` 
+
+## hasMany
 `$employer->jobs()` αν θέλω όλες τις δουλειές του εργοδότη. αλλα θα χρηαστώ να φτιάξω μια μέθοδο jobs()  
 #### Employer.php
 ```php
@@ -1361,3 +1363,126 @@ class Employer extends Model
 ```
 `$employer = App\Models\Employer::first();`  
 `$employer->jobs;`  
+
+# 12 Pivot tables - ενδιαμμεσος πίνακας
+## BelongsTo Many
+`php artisan make:model Tag -mf`  
+τα tags έχουν σχέση to many με τα tags γιατί μπορεί να έχει πολλα tags  
+#### 2025_06_10_063707_create_tags_table.php
+```php
+    public function up(): void
+    {
+        Schema::create('tags', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->timestamps();
+        });
+
+        Schema::create('job_tag', function (Blueprint $table) {
+            $table->id();
+            $table->foreignIdFor(Job::class);
+            $table->foreignIdFor(Tag::class);
+            $table->timestamps();
+        });
+    }
+```
+επειδή στη βάση μου το έχω αποθηκεύσει ως job_listings παω με ctrl+click στη μέθοδο και βλέπω οτι μπορώ να κάνω Override  
+```php
+  $table->foreignIdFor(Job::class, 'job_listing_id');
+```
+`php artisan migrate`  
+
+## foreign constreints
+αν φτιάξω (χειροκίνητα) ένα tag, το προσθέσω σε μια δουλειά και μετά σβήσω το tag, το tag παραμένει στην δουλειά και δεν σβήνετε αυτόματα  
+```php
+    public function up(): void
+    {
+        Schema::create('tags', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->timestamps();
+        });
+
+        Schema::create('job_tag', function (Blueprint $table) {
+            $table->id();
+            $table->foreignIdFor(Job::class, 'job_listing_id')->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(Tag::class)->constrained()->cascadeOnDelete();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('tags');
+        Schema::dropIfExists('job_tag');
+    }
+```
+`php artisan migrate:rollback && php artisan migrate`  
+όσο είμαι στο gui της SQLite τα consteints δεν είναι αυτόματα οπως είναι οταν τρέχει η Laravel. Αυτό είναι ρυθμηση του gui.  
+- στο job_tag ανοίγω ένα sql και τρέχω `PRAGMA foreign_keys=on`  
+
+## belongsToMany
+
+- το tag πρέπει να γίνει belongsToMany που είναι belongsTO και hasMany ταυτόχρονα (δηλ ανοικει καπου αλλα ανοίκει και σε άλλα)  
+- τώρα πρέπει να προστεθεί στο Job.php και στο Tag.php
+#### Job.php
+```php
+class Job extends Model {
+  use HasFactory;
+  protected $table = 'job_listings';
+
+  protected $fillable = ['title', 'salary'];
+
+  public function employer(){
+    return $this->belongsTo(Employer::class);
+  }
+
+  public function tags(){
+    return $this->belongsToMany(Tag::class);
+  }
+}
+```
+#### Tag.php
+```php
+
+class Tag extends Model
+{
+    use HasFactory;
+
+    public function jobs() {
+      return $this->belongsToMany(Job::class);
+    }
+}
+```
+
+`php artisan tinker`  
+`$job = App\Models\Job::find(10);`  
+`$job->tags;`  
+παίρνω error `General error: 1 no such column: job_tag.job_i`  
+περιμένει job_id αλλα εμείς έχουμε job_listing_id  
+- Job.php
+```php
+  public function tags(){
+    return $this->belongsToMany(Tag::class, foreignPivotKey: "job_listing_id");
+  }
+```
+τωρα οι πανω εντολές τρέχουν  
+- κάνουμε τα ίδια και στο Tag.php
+```php
+    public function jobs() {
+      return $this->belongsToMany(Job::class, relatedPivotKey: 'job_listing_id');
+    }
+```
+`$tag = App\Models\Tag::find(2);`  
+`$tag->jobs;`  
+
+## προσθέτω ενα καινούργιο tag 
+πχ στην δουλεια id 7  
+`$tag->jobs()->attach(App\Models\Job::find(7));`  
+τωρα στον Pivot μου job_tag, βλέπω οτι έχω μια νέα εγγραφή που συσχετίζει το tag 2 με την δουλειά 7  
+- στο $tag είναι ακομα αποθηκευμένη η παλια τιμή (ενα μόνο tag) οποτε πρέπει  
+`$tag->jobs()->get()`  
+`$tag->jobs()->get()->pluck('title')`
