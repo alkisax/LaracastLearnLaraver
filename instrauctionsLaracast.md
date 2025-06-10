@@ -1621,3 +1621,55 @@ Route::get('/jobs', function () {
 
 
 # 15 database seeding
+το fresh είναι προβληματικό
+`php artisan migrate:fresh`  
+`php artisan tinker`  
+`App\Models\Job::factory(100)->create();`
+μου τα έσβησε όλα και πρέπει να τα ξαναπεράσω  
+`php artisan migrate:fresh --seed` θα θέλαμε κάτι τέτοιο
+
+- στο αρχείο `example\database\seeders\DatabaseSeeder.php`  
+```php
+    public function run(): void
+    {
+        // User::factory(10)->create();
+
+        User::factory()->create([
+            'first_name' => 'John',
+            'last_name' => 'doe',
+            'email' => 'test@example.com',
+        ]);
+
+        Job::factory(200)->create();
+    }
+```
+`php artisan db:seed`  
+`php artisan migrate:fresh --seed`
+
+### δημιουργία seeder αρχείου
+`php artisan make:seeder` 
+μπορώ να διαχωρίσω το seed της δουλειας σε νέο αρχείο  
+#### example\database\seeders\JobSeeder.php
+```php
+    public function run(): void
+    {
+        Job::factory(200)->create();
+    }
+```
+και το example\database\seeders\DatabaseSeeder.php γίνετε
+```php
+    public function run(): void
+    {
+        // User::factory(10)->create();
+
+        User::factory()->create([
+            'first_name' => 'John',
+            'last_name' => 'doe',
+            'email' => 'test@example.com',
+        ]);
+
+        Job::factory(200)->create();
+    }
+```
+αν θέλω να τρέξει μόνο ένας seeder  
+`php artisan db:seed --class=JobSeeder`  
