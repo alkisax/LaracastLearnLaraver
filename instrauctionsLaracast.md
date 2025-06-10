@@ -1672,4 +1672,112 @@ Route::get('/jobs', function () {
     }
 ```
 αν θέλω να τρέξει μόνο ένας seeder  
-`php artisan db:seed --class=JobSeeder`  
+`php artisan db:seed --class=JobSeeder`
+
+# 16 Forms
+
+## /create job
+φτιαχνω φάκελο \resources\views\jobs και μεταφέρω εκεί όλα τα σχετικά μου views. **αλάζω το όνομα του jobs.blade σε index.blade** - **αλάζω το όνομα του job.blade σε show.blade** και φτιάχνω ένα create.blade και τα αλλάζω και στο web.php  
+
+
+#### web.php
+```php
+<?php
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Route;
+use App\Models\Job;
+
+Route::get('/', function () {
+
+// $jobs = Job::all();
+  // dd($jobs[0]->title);
+
+
+    return view('home', [
+      'greeting' => 'Hello',
+      'name' => 'Alkis'
+    ]);
+});
+
+Route::get('/jobs', function () {
+  $jobs = Job::with('employer')->simplePaginate(3);
+  return view('jobs/index', [
+    'jobs' => $jobs
+  ]);
+});
+
+Route::get('/jobs/create', function () {
+  return view('jobs/create');
+});
+
+Route::get('/jobs/{id}', function ($id) {
+  $job = Job::find($id);
+  return view('jobs/show', ['job' => $job]);
+});
+
+Route::get('/contact', function () {
+    return view('contact');
+});
+```
+
+#### example\resources\views\jobs\create.blade.php
+```xml
+<x-layout>
+  <x-slot:heading>
+    Create Job
+  </x-slot:heading>
+
+<p>TODO</p>
+
+</x-layout>
+```
+
+### πάω να πάρω μια φορμα απο το tailwind ui  
+https://tailwindcss.com/plus -> components -> app ui -> form -> κάνω copy/paste και σβήνω οτι δεν χρειάζετε
+
+τώρα το προσαρμόζω στο να ταιριάζει με τις στήλες στην db μου title και salary  
+
+#### create.blade.php
+```xml
+<x-layout>
+  <x-slot:heading>
+    Create Job
+  </x-slot:heading>
+
+  <form>
+    <div class="space-y-12">
+      <div class="border-b border-gray-900/10 pb-12">
+        <h2 class="text-base/7 font-semibold text-gray-900">Create a New Job</h2>
+        <p class="mt-1 text-sm/6 text-gray-600">We just need a handfull of details from you.</p>
+
+        <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+          <div class="sm:col-span-4">
+            <label for="title" class="block text-sm/6 font-medium text-gray-900">title</label>
+            <div class="mt-2">
+              <div class="flex items-center rounded-md bg-white pl-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600">
+                <input type="text" name="title" id="title" class="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6 px-3" placeholder="Shift Leader">
+              </div>
+            </div>
+          </div>
+
+          <div class="sm:col-span-4">
+            <label for="salary" class="block text-sm/6 font-medium text-gray-900">salary</label>
+            <div class="mt-2">
+              <div class="flex items-center rounded-md bg-white pl-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600">
+                <input type="text" name="salary" id="salary" class="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6 px-3" placeholder="$50,000">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6 flex items-center justify-end gap-x-6">
+      <button type="button" class="text-sm/6 font-semibold text-gray-900">Cancel</button>
+      <button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
+    </div>
+  </form>
+</x-layout>
+```
+
+8:52
