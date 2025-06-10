@@ -1486,3 +1486,138 @@ class Tag extends Model
 - στο $tag είναι ακομα αποθηκευμένη η παλια τιμή (ενα μόνο tag) οποτε πρέπει  
 `$tag->jobs()->get()`  
 `$tag->jobs()->get()->pluck('title')`
+
+# 13 eager loading / N+1
+
+### κάνω την λίστα, κάρτες
+
+#### jobs.blade.php
+```php
+  <div class="space-y-4">
+    @foreach ($jobs as $job)
+        <a href="/jobs/{{ $job['id'] }}" class="block px-4 py-6 border border-gray-200 rounded-lg">
+          <strong>{{ $job['title'] }}</strong>: Pays {{ $job['salary'] }} per year
+        </a>
+    @endforeach
+  </div>
+```
+### εμφανίζω τον employer στην κάθε κάρτα
+- `<div>{{ $job->employer->name }}</div>`  
+
+```php
+  <div class="space-y-4">
+    @foreach ($jobs as $job)
+        <a href="/jobs/{{ $job['id'] }}" class="block px-4 py-6 border border-gray-200 rounded-lg">
+          <div class="font-bold text-blue-500 text-sm">
+            {{ $job->employer->name }}
+          </div>
+          <div>
+              <strong>{{ $job['title'] }}</strong>: Pays {{ $job['salary'] }} per year
+          </div>
+        </a>
+    @endforeach
+  </div>
+```
+το προβλημα είναι οτι τρέχει μια query σε κάθε βήμα του Loop και αυτό είναι χρονοβόρο  
+#### web.php
+τωρα είναι  
+```php
+Route::get('/jobs', function () {
+  return view('jobs', [
+    'jobs' => Job::all()
+  ]);
+});
+```
+```php
+Route::get('/jobs', function () {
+  $jobs = Job::with('employer')->get();
+  return view('jobs', [
+    'jobs' => $jobs
+  ]);
+});
+```
+- αν θέλω να απενεργοποιησω εντελός το lasy query loading
+#### example\app\Providers\AppServiceProvider.php
+```php
+    public function boot(): void
+    {
+        // Model::preventLazyLoading();
+    }
+```
+
+# 14 pagination
+
+###
+`$jobs = Job::with('employer')->get();`  
+το πρόβλημα με αυτό είναι οτι φαίρνει ολες τις καταχωρήσεις. Αυτο δεν είναι οκ σε βάσεις με χιλιάδες καταχωρήσεις
+`$jobs = Job::with('employer')->paginate();`  
+οδηγίες paginate `public function paginate($perPage = null, $columns = ['*'], $pageName = 'page', $page = null, $total = null)` η πρώτη παράμετρος καθορίζει πόσες καταχωρήσεις ανα σελίδα
+δεν έχει κουμπια αλλα να πάω στην `http://127.0.0.1:8000/jobs?page=2` βλέπω και άλλες  
+#### example\routes\web.php
+```php
+Route::get('/jobs', function () {
+  $jobs = Job::with('employer')->paginate(3);
+  return view('jobs', [
+    'jobs' => $jobs
+  ]);
+});
+```
+  
+#### jobs.blade.php
+- `{{ $jobs->links() }}`
+```php
+<x-layout>
+  <x-slot:heading>
+    Job listings
+  </x-slot:heading>
+  <h1>hello from job listings page</h1>
+
+  <div class="space-y-4">
+    @foreach ($jobs as $job)
+        <a href="/jobs/{{ $job['id'] }}" class="block px-4 py-6 border border-gray-200 rounded-lg">
+          <div class="font-bold text-blue-500 text-sm">
+            {{ $job->employer->name }}
+          </div>
+          <div>
+              <strong>{{ $job['title'] }}</strong>: Pays {{ $job['salary'] }} per year
+          </div>
+        </a>
+    @endforeach
+    <div>
+      {{ $jobs->links() }}
+    </div>
+  </div>
+
+</x-layout>
+```
+
+###
+`php artisan vendor:publish` Αντιγράφει αρχεία από βιβλιοθήκες (π.χ. ρυθμίσεις, views) στον φάκελο του project σας για να τα τροποποιήσετε.  εδώ θα βρώ μετα τα αρχεία του pagenator για να τους αλλάξω το styling  
+μου επιστρέφει τον φάκελο που τα έβαλε `E:\coding\laravel\example\vendor\laravel\framework\src\Illuminate\Pagination\resources\views`  
+#### για ρυθμήσεις example\app\Providers\AppServiceProvider.php
+```php
+    public function boot(): void
+    {
+        // Model::preventLazyLoading();
+        // Paginator::useBootstrapFive();
+    }
+```
+αν τώρα θέλω να παραμείνω στο tailwind
+κάνω styling αλλαγές στο `example\resources\views\vendor\pagination\tailwind.blade.php`
+
+
+### simplePaginate
+#### example\routes\web.php
+```php
+Route::get('/jobs', function () {
+  $jobs = Job::with('employer')->simplePaginate(3);
+  return view('jobs', [
+    'jobs' => $jobs
+  ]);
+});
+```
+### cusrsor based pagination
+`  $jobs = Job::with('employer')->cursorPaginate(3);`
+
+
+# 15 database seeding

@@ -5,7 +5,7 @@ use App\Models\Job;
 
 Route::get('/', function () {
 
-  // $jobs = Job::all();
+// $jobs = Job::all();
   // dd($jobs[0]->title);
 
 
@@ -16,8 +16,9 @@ Route::get('/', function () {
 });
 
 Route::get('/jobs', function () {
+  $jobs = Job::with('employer')->simplePaginate(3);
   return view('jobs', [
-    'jobs' => Job::all()
+    'jobs' => $jobs
   ]);
 });
 
