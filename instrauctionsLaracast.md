@@ -1779,5 +1779,111 @@ https://tailwindcss.com/plus -> components -> app ui -> form -> κάνω copy/pa
   </form>
 </x-layout>
 ```
+απλοποιημένο
+```xml
+  <form>
+    <div>
+      <h2>
+        Create a New Job
+      </h2>
+      <p>
+        We just need a handfull of details from you.
+      </p>
 
+      <div>
+        <label for="title">
+          title
+        </label>
+        <div class="mt-2">
+          <div>
+            <input type="text" name="title" id="title"  placeholder="Shift Leader">
+          </div>
+        </div>
+
+        <div class="sm:col-span-4">
+          <label for="salary">
+            salary
+          </label>
+          <div class="mt-2">
+            <div>
+              <input type="text" name="salary" id="salary"  placeholder="$50,000">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6 flex items-center justify-end gap-x-6">
+      <button type="button">
+        Cancel
+      </button>
+      <button type="submit">
+        Save
+      </button>
+    </div>
+  </form>
+</x-layout>
+```
 8:52
+προσθέτω  
+`<form method="POST" action="/jobs">`  
+
+### csrfr problem
+#### E:\coding\laravel\example\routes\web.php
+```xml
+  <form method="POST" action="/jobs">
+    @csrf 
+```
+#### web.php
+```php
+Route::post('/jobs', function () {
+  dd(request()->all());
+});
+```
+```php
+Route::post('/jobs', function () {
+  dd(request('title'));
+});
+```
+```php
+Route::post('/jobs', function () {
+  // TODO validation
+  Job::create([
+    'title' => request('title'),
+    'salary' => request('salary'),
+    'employer_id' => 1 //hardcoded
+  ]);
+  return redirect('/jobs');
+});
+```
+το προβλημα είναι με τα fillable fields  
+#### example\app\Models\Job.php
+```php
+protected $fillable = ['title', 'salary'];
+```
+τώρα έχει προστεθεί  
+### φτιαχνουμε την σειρά προβολής
+αρχικά  
+```php
+Route::get('/jobs', function () {
+  $jobs = Job::with('employer')->simplePaginate(3);
+  return view('jobs/index', [
+    'jobs' => $jobs
+  ]);
+});
+```
+αλλαγή
+```php
+Route::get('/jobs', function () {
+  $jobs = Job::with('employer')->latest()->simplePaginate(3);
+  return view('jobs/index', [
+    'jobs' => $jobs
+  ]);
+});
+```
+### κάνω disable το fillable
+#### Jobs.php
+```php
+  // protected $fillable = ['employer_id','title', 'salary'];
+  protected $guarded = [];
+```
