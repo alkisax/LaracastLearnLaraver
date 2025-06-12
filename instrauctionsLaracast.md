@@ -1887,3 +1887,77 @@ Route::get('/jobs', function () {
   // protected $fillable = ['employer_id','title', 'salary'];
   protected $guarded = [];
 ```
+
+# 17 validation
+## προσθέτω Link για το create
+#### example\resources\views\Components\layout.blade.php
+- το style για το κουμπί το "εκλεψa" απο το pagination του αρχειου tailwind (ctrl+p)
+```xml
+  <header class="bg-white shadow-sm">
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 sm:flex sm:justify-between ">
+      <h1 class="text-3xl font-bold tracking-tight text-gray-900">{{ $heading }}</h1>
+
+      <a href="/jobs/create" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:focus:border-blue-700 dark:active:bg-gray-700 dark:active:text-gray-300">Create Job</a>
+    </div>
+  </header>
+```
+δημιουργώ example\resources\views\Components\button.blade.php
+```php
+      <a {{ $attributes->merge(['class' => 'relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:focus:border-blue-700 dark:active:bg-gray-700 dark:active:text-gray-300'])}}>{{ $slot }}</a>
+```
+#### layout.blade.php
+```xml
+  <header class="bg-white shadow-sm">
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 sm:flex sm:justify-between ">
+      <h1 class="text-3xl font-bold tracking-tight text-gray-900">{{ $heading }}</h1>
+
+      <x-button href="/jobs/create">Create Job</x-button>
+    </div>
+  </header>
+```
+
+## client/server side validation
+#### example\resources\views\jobs\create.blade.php
+Προσθεσα required
+```xml
+<input type="text" name="title" id="title" class="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6 px-3" placeholder="Shift Leader" required>
+```
+
+#### example\routes\web.php
+αρχικα  
+```php
+Route::post('/jobs', function () {
+  request()->validate([
+    'title' => ['required', 'min:3'],
+    'salary' => ['required'],
+  ]);
+
+  Job::create([
+    'title' => request('title'),
+    'salary' => request('salary'),
+    'employer_id' => 1 //hardcoded
+  ]);
+  return redirect('/jobs');
+});
+```
+
+τωρα αναγνωρίζει τα λάθη αλλα δεν μου τα κάνει display  
+##### example\resources\views\jobs\create.blade.php
+```php
+        <div class="text-red-500 italic">
+          @if($errors->any())
+            <ul>
+              @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+              @endforeach
+            </ul>        
+          @endif
+        </div>
+```
+
+αλλιως θα μπορούσα κάτω απο κάθε input Να προσθέσω  
+```php
+              @error('title')
+               <p class="text-xs text-red-500 font-semibold">{{ $message }}</p> 
+              @enderror
+```
