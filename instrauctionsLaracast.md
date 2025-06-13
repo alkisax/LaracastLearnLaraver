@@ -1961,3 +1961,234 @@ Route::post('/jobs', function () {
                <p class="text-xs text-red-500 font-semibold">{{ $message }}</p> 
               @enderror
 ```
+
+# 18 crud
+
+## edit
+### προσθήκη κουμπί edit
+#### example\resources\views\jobs\show.blade.php
+το `href="/jobs/{{ $job->id }}/edit"` προστεθηκε αφού το βάλαμε στην Html παρακάτω
+```xml
+<p class="mt-6">
+  <x-button href="/jobs/{{ $job->id }}/edit">Edit job</x-button>
+</p>
+``` 
+#### example\routes\web.php
+προστεθηκε
+```php
+Route::get('/jobs/{id}/edit', function ($id) {
+  $job = Job::find($id);
+  return view('jobs/edit', ['job' => $job]);
+});
+```
+στο
+```php
+<?php
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Route;
+use App\Models\Job;
+
+// index
+Route::get('/', function () {
+
+// $jobs = Job::all();
+  // dd($jobs[0]->title);
+
+
+    return view('home', [
+      'greeting' => 'Hello',
+      'name' => 'Alkis'
+    ]);
+});
+
+Route::get('/jobs', function () {
+  $jobs = Job::with('employer')->latest()->simplePaginate(3);
+  return view('jobs/index', [
+    'jobs' => $jobs
+  ]);
+});
+
+// create
+Route::get('/jobs/create', function () {
+  return view('jobs/create');
+});
+
+//show
+Route::get('/jobs/{id}', function ($id) {
+  $job = Job::find($id);
+  return view('jobs/show', ['job' => $job]);
+});
+
+//store
+Route::post('/jobs', function () {
+  request()->validate([
+    'title' => ['required', 'min:3'],
+    'salary' => ['required', ],
+  ]);
+
+  Job::create([
+    'title' => request('title'),
+    'salary' => request('salary'),
+    'employer_id' => 1 //hardcoded
+  ]);
+  return redirect('/jobs');
+});
+
+Route::get('/jobs/{id}/edit', function ($id) {
+  $job = Job::find($id);
+  return view('jobs/edit', ['job' => $job]);
+});
+
+Route::get('/contact', function () {
+    return view('contact');
+});
+```
+- H φορμα μου θα μοιαζει με το create για αυτο την κάνω κοπι πειστ και αλλαζω όνομα
+#### example\resources\views\jobs\edit.blade.php
+```xml
+  <x-slot:heading>
+    Edit Job: {{ $job -> title }}
+  </x-slot:heading>
+```
+#### example\resources\views\jobs\show.blade.php
+απο  
+```xml
+<x-layout>
+  <x-slot:heading>
+    Job  
+  </x-slot:heading>
+  <h2 class="font-bold text-lg">{{ $job['title'] }}</h2>
+
+<p>
+  this job pays {{ $job['salary'] }} per year
+</p>
+
+<p class="mt-6">
+  <x-button href="/jobs/{{ $job->id }}/edit">Edit job</x-button>
+</p>
+
+</x-layout>
+```
+σε  
+```xml
+<x-layout>
+  <x-slot:heading>
+    Job  
+  </x-slot:heading>
+  <h2 class="font-bold text-lg">{{ $job->title }}</h2>
+
+<p>
+  this job pays {{ $job->salary }} per year
+</p>
+
+<p class="mt-6">
+  <x-button href="/jobs/{{ $job->id }}/edit">Edit job</x-button>
+</p>
+
+</x-layout>
+```
+#### example\resources\views\jobs\edit.blade.php
+αλλο Placeholder  
+```xml
+value="{{ $job->title }}"
+value="{{ $job->salary }}"
+```
+το cancel πρέπει να σε πηγένει πίσω στην jobs σελιδα  
+```xml
+      <a href="/jobs/{{ $job->id }}" class="text-sm/6 font-semibold text-gray-900">Cancel</a>
+```
+
+το update Πρέπει να κάνει κάτι άλλο  
+και μιας και ειμαστε εδώ φτιάχνουμε και τον delete
+#### web.php
+```php
+//update
+Route::patch('/jobs/{id}', function ($id) {
+  // validate
+  request()->validate([
+    'title' => ['required', 'min:3'],
+    'salary' => ['required', ],
+  ]);
+
+  // authorize (on hold)
+
+  // update
+  $job = Job::findOrFail($id); // findOrFail σε περίπτωση λάθος id
+  $job->title = request('title');
+  $job->salary = request('salary');
+  $job->save();
+
+  //αλλιώς το ίδιο με 
+  // $job->update([
+  //   'title' => request('title'),
+  //   'salary' => request('salary'),
+  // ]);
+
+  // redirect to job page
+  return redirect('/jobs/' . $job->id);
+
+});
+
+//destroy
+Route::delete('/jobs/{id}', function ($id) {
+  //authorize(on hold)
+
+  //delete
+  // $job = Job::findOrFail($id);
+  // $job->delete();
+  // ή σε μία γραμμη:
+  Job::findOrFail($id)->delete();
+
+  //redirect
+  return redirect('/jobs');
+});
+```
+
+#### example\resources\views\jobs\edit.blade.php
+- η html δέχετε μόνο post/get αλλα εγώ για το update πρέπει να κάνω patch. Η laravel μου δινει το @method που εξομοιώνει το Post με κάτι άλλο.  
+
+```xml
+  <form method="POST" action="/jobs/{{ $job->id }}">
+    @csrf 
+    @method('PATCH')
+```
+
+### Προσθήκη κουμπί delete
+#### example\resources\views\jobs\edit.blade.php
+```xml
+    <div class="mt-6 flex items-center justify-between gap-x-6">
+      <!-- όλη η σελίδα είναι μια φορμ που κάνει πατς. αλλά το ντιλιτ είναι κάτι άλλο. όμως δεν μπορω να βάλω φόρμα μέσα σε φόρμα. Προσοχή στο form="" Μέσα στο btn -->
+      <div class="flex items-center">
+        <button
+          form="delete-form"
+          class="text-red-500 text-sm font-bold"  
+        >
+          Delete
+        </button>
+      </div>
+
+      <div class="flex items-center gap-x-6">
+        <a href="/jobs/{{ $job->id }}" class="text-sm/6 font-semibold text-gray-900">
+          Cancel
+        </a>
+        
+        <div>
+          <button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+            Update
+          </button>          
+        </div>
+      </div>
+
+    </div>
+  </form>
+
+  <form 
+    method="POST" 
+    action="/jobs/{{ $job->id }}" 
+    class="hidden"
+    id="delete-form"  
+  >
+    @csrf
+    @method('DELETE')
+  </form>
+```
