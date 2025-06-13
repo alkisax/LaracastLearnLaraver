@@ -2192,3 +2192,321 @@ Route::delete('/jobs/{id}', function ($id) {
     @method('DELETE')
   </form>
 ```
+
+# 19 routes
+
+## route model binding
+
+#### example\routes\web.php
+```php
+//show
+Route::get('/jobs/{id}', function ($id) {
+  $job = Job::find($id);
+  return view('jobs/show', ['job' => $job]);
+});
+```
+anti να πάρει id κατάλαβε μόνο του τι job ηθελε
+```php
+//show
+Route::get('/jobs/{job}', function (Job $job) {
+  // $job = Job::find($id);
+  return view('jobs/show', ['job' => $job]);
+});
+```
+ομοίος  
+```php
+<?php
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Route;
+use App\Models\Job;
+
+// index
+Route::get('/', function () {
+
+// $jobs = Job::all();
+  // dd($jobs[0]->title);
+
+
+    return view('home', [
+      'greeting' => 'Hello',
+      'name' => 'Alkis'
+    ]);
+});
+
+Route::get('/jobs', function () {
+  $jobs = Job::with('employer')->latest()->simplePaginate(3);
+  return view('jobs/index', [
+    'jobs' => $jobs
+  ]);
+});
+
+// create
+Route::get('/jobs/create', function () {
+  return view('jobs/create');
+});
+
+//show
+Route::get('/jobs/{job}', function (Job $job) {
+  // $job = Job::find($id);
+  return view('jobs/show', ['job' => $job]);
+});
+
+//store
+Route::post('/jobs', function () {
+  request()->validate([
+    'title' => ['required', 'min:3'],
+    'salary' => ['required', ],
+  ]);
+
+  Job::create([
+    'title' => request('title'),
+    'salary' => request('salary'),
+    'employer_id' => 1 //hardcoded
+  ]);
+  return redirect('/jobs');
+});
+
+// edit
+Route::get('/jobs/{job}/edit', function (Job $job) {
+  // $job = Job::find($id);
+  return view('jobs/edit', ['job' => $job]);
+});
+
+//update
+Route::patch('/jobs/{job}', function (Job $job) {
+  // validate
+  request()->validate([
+    'title' => ['required', 'min:3'],
+    'salary' => ['required', ],
+  ]);
+
+  // authorize (on hold)
+
+  // update
+  // $job = Job::findOrFail($id); // findOrFail σε περίπτωση λάθος id
+  $job->title = request('title');
+  $job->salary = request('salary');
+  $job->save();
+
+  //αλλιώς το ίδιο με 
+  // $job->update([
+  //   'title' => request('title'),
+  //   'salary' => request('salary'),
+  // ]);
+
+  // redirect to job page
+  return redirect('/jobs/' . $job->id);
+
+});
+
+//destroy
+Route::delete('/jobs/{job}', function (Job $job) {
+  //authorize(on hold)
+
+  //delete
+  // $job = Job::findOrFail($id);
+  // $job->delete();
+  // ή σε μία γραμμη:
+  // Job::findOrFail($id)->delete();
+  $job->delete();
+
+  //redirect
+  return redirect('/jobs');
+});
+
+
+Route::get('/contact', function () {
+    return view('contact');
+});
+```
+
+## controller classes
+
+`php artisan make:controller`  
+φτιάχνω τον controller (με κοπι πειστ βασικα) και τον περνάω στα routes
+#### example\app\Http\Controllers\JobController.php
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Job;
+
+class JobController extends Controller
+{
+    public function index(){
+      $jobs = Job::with('employer')->latest()->simplePaginate(3);
+      return view('jobs/index', [
+        'jobs' => $jobs
+      ]);
+    }
+
+    public function create(){
+      return view('jobs/create');
+    }
+
+    public function show(Job $job){
+      // $job = Job::find($id);
+      return view('jobs/show', ['job' => $job]);
+    }
+
+    public function store(){
+      request()->validate([
+        'title' => ['required', 'min:3'],
+        'salary' => ['required', ],
+      ]);
+
+      Job::create([
+        'title' => request('title'),
+        'salary' => request('salary'),
+        'employer_id' => 1 //hardcoded
+      ]);
+      return redirect('/jobs');      
+    }
+
+    public function edit(Job $job){
+      // $job = Job::find($id);
+      return view('jobs/edit', ['job' => $job]);
+    }
+
+    public function update(Job $job){
+      // validate
+      request()->validate([
+        'title' => ['required', 'min:3'],
+        'salary' => ['required', ],
+      ]);
+
+      // authorize (on hold)
+
+      // update
+      // $job = Job::findOrFail($id); // findOrFail σε περίπτωση λάθος id
+      $job->title = request('title');
+      $job->salary = request('salary');
+      $job->save();
+
+      //αλλιώς το ίδιο με 
+      // $job->update([
+      //   'title' => request('title'),
+      //   'salary' => request('salary'),
+      // ]);
+
+      // redirect to job page
+      return redirect('/jobs/' . $job->id);      
+    }
+
+    public function destroy(Job $job){
+      //authorize(on hold)
+
+      //delete
+      // $job = Job::findOrFail($id);
+      // $job->delete();
+      // ή σε μία γραμμη:
+      // Job::findOrFail($id)->delete();
+      $job->delete();
+
+      //redirect
+      return redirect('/jobs');      
+    }
+}
+```
+#### web.php
+```php
+<?php
+
+use App\Http\Controllers\JobController;
+use Illuminate\Support\Facades\Route;
+
+
+
+Route::get('/', function () {
+    return view('home', [
+      'greeting' => 'Hello',
+      'name' => 'Alkis'
+    ]);
+});
+
+Route::get('/jobs', [JobController::class, 'index']);
+Route::get('/jobs/create', [JobController::class, 'create']);
+Route::get('/jobs/{job}', [JobController::class, 'show']);
+Route::post('/jobs', [JobController::class, 'store']);
+Route::get('/jobs/{job}/edit', [JobController::class, 'edit']);
+Route::patch('/jobs/{job}', [JobController::class, 'update']);
+Route::delete('/jobs/{job}', [JobController::class, 'destroy']);
+
+Route::get('/contact', function () {
+    return view('contact');
+});
+```
+
+## Route::view()
+καλό για static pages
+#### web.php
+```php
+// Route::get('/', function () {
+//     return view('home');
+// });
+Route::view('/', 'home');
+
+//...
+
+// Route::get('/contact', function () {
+//     return view('contact');
+// });
+Route::view('/contact', 'contact');
+```
+
+## List your routes
+`php artisan route:list`  
+`php artisan route:list --except-vendor`  
+
+## Route Groups
+απο:  
+```php
+Route::get('/jobs', [JobController::class, 'index']);
+Route::get('/jobs/create', [JobController::class, 'create']);
+Route::get('/jobs/{job}', [JobController::class, 'show']);
+Route::post('/jobs', [JobController::class, 'store']);
+Route::get('/jobs/{job}/edit', [JobController::class, 'edit']);
+Route::patch('/jobs/{job}', [JobController::class, 'update']);
+Route::delete('/jobs/{job}', [JobController::class, 'destroy']);
+```
+σε:  
+```php
+Route::controller(JobController::class)->group(function () {
+  Route::get('/jobs',  'index');
+  Route::get('/jobs/create',  'create');
+  Route::get('/jobs/{job}',  'show');
+  Route::post('/jobs',  'store');
+  Route::get('/jobs/{job}/edit',  'edit');
+  Route::patch('/jobs/{job}',  'update');
+  Route::delete('/jobs/{job}',  'destroy');
+});
+```
+
+## route resources
+- Route::view
+- Route::resource
+```php
+<?php
+
+use App\Http\Controllers\JobController;
+use Illuminate\Support\Facades\Route;
+
+Route::view('/', 'home');
+
+// Route::controller(JobController::class)->group(function () {
+//   Route::get('/jobs', 'index');
+//   Route::get('/jobs/create', 'create');
+//   Route::get('/jobs/{job}', 'show');
+//   Route::post('/jobs', 'store');
+//   Route::get('/jobs/{job}/edit', 'edit');
+//   Route::patch('/jobs/{job}', 'update');
+//   Route::delete('/jobs/{job}', 'destroy');
+// });
+
+Route::resource('jobs', JobController::class);
+
+Route::view('/contact', 'contact');
+```
+
